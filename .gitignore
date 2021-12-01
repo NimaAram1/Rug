@@ -1,0 +1,8 @@
+# virtual environment
+venv
+
+# local database
+backend/db.sqlite3
+
+# caches
+backend/*/__pycache__
