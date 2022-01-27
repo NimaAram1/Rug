@@ -13,7 +13,7 @@ class UserAdmin(BaseAdmin):
     list_display = ["email", "username"]
     list_filter = ["is_admin"]
     fieldsets = (
-        (None, {"fields":["email", "username", "name"]}),
+        (None, {"fields":["email", "username"]}),
         ("اطلاعات بیشتر", {"fields":["name"]}),
         ("اطلاعات شخصی و دسترسی ها", {"fields":["password", "is_admin", "is_active"]})
     )

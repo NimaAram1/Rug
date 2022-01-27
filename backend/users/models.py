@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.utils.text import gettext_lazy as _
+from django.db.models import Q, F
+from .managers import UserManager
 
-class User(models.Model):
+class User(AbstractBaseUser):
     """
     A schema of User model
     """
@@ -17,6 +19,9 @@ class User(models.Model):
     status = models.CharField(max_length=2, choices=STATUS, verbose_name=_("Status"), help_text=_("Your activity status changed to colors!(green: active, yellow: away, red: busy)"), blank=True, default="gr")
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    objects = UserManager()
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email"]
 
     def __str__(self):
         return f"{self.username} | {self.email}"
@@ -40,5 +45,5 @@ class User(models.Model):
             models.Index(name="username_idx", fields=["username"]),
         ]
         constraints = [
-            models.UniqueConstraint(name="username_email_unique", fields=["username", "email"]),
+             models.CheckConstraint(name="check_username_email_unique", check=~Q(username=F('email'))),
         ]    
