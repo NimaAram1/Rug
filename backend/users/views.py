@@ -3,14 +3,18 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework import status
 from django.contrib.auth import authenticate
+from .models import VerficationCode
 from django.utils.text import gettext_lazy as _
+from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     RegisterationSerializer,
     LoginSerializer,
-    LogoutSerializer
+    LogoutSerializer,
+    ConfirmCodeSerializer
 )
+from .utils import give_code
 
 # getting user model
 User = get_user_model()
@@ -24,18 +28,46 @@ class RegisterationApiView(APIView):
         if request.user.is_anonymous:
             data = RegisterationSerializer(data=request.data)
             if data.is_valid():
-                User.objects.create_user(email=data.validated_data["email"], username=data.validated_data["username"],
-                password=data.validated_data["password"], name=data.validated_data["name"])
+                validated_data = data.validated_data
+                del(validated_data["repeated_password"])
+                user = User.objects.create_user(**validated_data)  
+                verification_code = give_code()
+                VerficationCode.objects.create(user=user, code=verification_code)
+                send_mail("Verification Code", f"your code is: {verification_code}", "nima@gmail.com", [data.validated_data["email"]])
                 return Response({
-                "message": f'{data.validated_data["email"]} account was created successfully'
+                "message": f'{data.validated_data["email"]} account was created successfully, your verification code has been sent to your email'
                 }, status=status.HTTP_201_CREATED)
             
             else:
                 return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({
-                "message": "You already authorized"
+                "message": "You're already authorized"
             }, status=status.HTTP_400_BAD_REQUEST)   
+
+class ConfirmCodeApiView(APIView):
+    def post(self, request):
+        data = ConfirmCodeSerializer(data=request.data)
+        if data.is_valid():
+            user = User.objects.get(email=data.validated_data["email"])
+            if user.is_active:
+                return Response({
+                    "message": "Your account is already confirmed"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                code = VerficationCode.objects.get(user=user)
+                if code.code == data.validated_data["code"] and VerficationCode.objects.nonexpired().filter(user=user).exists():
+                    user.is_active = True
+                    user.save()
+                    return Response({
+                        "message": "Your account has been confirmed"
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        "message": "Your code is incorrect or expired"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginApiView(generics.GenericAPIView):
     """

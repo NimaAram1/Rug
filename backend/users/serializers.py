@@ -5,6 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from .models import VerficationCode
 
 # getting user model
 User = get_user_model()
@@ -20,7 +21,7 @@ class RegisterationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'email': {'help_text': _("Enter your email")},
             'username': {'help_text': _("Enter your username")},
-            'name': {'help_text': _("Enter your name")}
+            'name': {'help_text': _("Enter your name"), 'required': False, 'allow_blank': True},
         }
 
     
@@ -54,6 +55,10 @@ class LoginSerializer(serializers.ModelSerializer):
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(write_only=True, required=True, help_text=_("Enter your refresh key for logout"))  
 
+    default_error_messages = {
+        "bad token": _("Your token doesn't valid")
+    }
+
     def validate(self, data):
         self.token = data["refresh"]
         return data
@@ -62,4 +67,14 @@ class LogoutSerializer(serializers.Serializer):
         try:
             RefreshToken(self.token).blacklist() 
         except TokenError:
-            raise AuthenticationFailed(_("Your token isn't valid"))       
+             self.fail("bad token")     
+
+class ConfirmCodeSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(write_only=True, max_length=220, min_length=6, help_text=_("Enter your email"))
+    class Meta:
+        model = VerficationCode
+        fields = ["email","code"]
+        extra_kwargs = {
+            'email': {'help_text': _("Enter your email")},
+            'code': {'help_text': _("Enter your code")},
+        }

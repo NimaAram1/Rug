@@ -1,5 +1,6 @@
 from django.contrib.auth.models import BaseUserManager
 from django.utils.text import gettext_lazy as _
+from datetime import datetime
 
 class UserManager(BaseUserManager):
     """
@@ -27,4 +28,9 @@ class UserManager(BaseUserManager):
     def return_user_intance(self, email, username, password):
         user = self.model(email=self.normalize_email(email), username=username)
         user.set_password(password)
-        return user 
+        return user
+
+
+class VerificationCodeManager(BaseUserManager):
+    def nonexpired(self):
+        return self.filter(expire_date__gt=datetime.now())

@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseAdmin
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from .forms import UserCreateFormAdmin, UserChangeFormAdmin
+from .models import VerficationCode
 
 # getting user model
 User = get_user_model()
@@ -26,3 +27,4 @@ class UserAdmin(BaseAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.unregister(Group)
+admin.site.register(VerficationCode)

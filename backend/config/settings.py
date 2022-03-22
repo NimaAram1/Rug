@@ -172,3 +172,7 @@ SIMPLE_JWT = {
 'SLIDING_TOKEN_LIFETIME': datetime.timedelta(minutes=450),
 'SLIDING_TOKEN_REFRESH_LIFETIME': datetime.timedelta(minutes=830),
 }
+
+# email settings
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
