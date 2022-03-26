@@ -26,7 +26,7 @@ class RegisterationApiView(APIView):
     """
     def post(self, request):
         if request.user.is_anonymous:
-            data = RegisterationSerializer(data=request.data)
+            data = RegisterationSerializer(data=request.data) 
             if data.is_valid():
                 validated_data = data.validated_data
                 del(validated_data["repeated_password"])
